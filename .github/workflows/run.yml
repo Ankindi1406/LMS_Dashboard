@@ -1,0 +1,39 @@
+name: LMS Automation
+
+on:
+  schedule:
+    - cron: "0 2 * * *"   # adjust timing
+  workflow_dispatch:
+
+jobs:
+  run-job:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      # ✅ Step 1: Run API extraction
+      - name: Run main script
+        run: node script.js
+
+      # ✅ Step 2: Run merge (your merge code)
+      - name: Merge files
+        run: node merge.js
+
+      # ✅ Step 3: Upload output file
+      - name: Upload final file
+        uses: actions/upload-artifact@v3
+        with:
+          name: final-output
+          path: |
+            *.xlsx
+            *.csv
