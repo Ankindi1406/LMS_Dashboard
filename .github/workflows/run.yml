@@ -23,11 +23,11 @@ jobs:
 
       # ✅ Step 1: Run API extraction
       - name: Run main script
-        run: node script.js
+        run: node app.js
 
       # ✅ Step 2: Run merge (your merge code)
       - name: Merge files
-        run: node merge.js
+        run: node excelMerger.js
 
       # ✅ Step 3: Upload output file
       - name: Upload final file
