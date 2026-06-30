@@ -1,4 +1,4 @@
-name: LMS Automation
+name: LMS_Automation
 
 on:
   schedule:
