@@ -2,7 +2,7 @@ name: LMS_Automation
 
 on:
   schedule:
-    - cron: "0 2 * * *"   # adjust timing
+    - cron: "0 2 * * *"   # will adjust timing in the future
   workflow_dispatch:
 
 jobs:
