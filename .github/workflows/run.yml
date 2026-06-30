@@ -23,7 +23,7 @@ jobs:
 
       # ✅ Step 1: Run API extraction
       - name: Run main script
-        run: node app.js
+        run: node app2.js
 
       # ✅ Step 2: Run merge (your merge code)
       - name: Merge files
