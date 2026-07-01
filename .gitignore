@@ -1,0 +1,4 @@
+node_modules/
+actions-runner/
+*.xlsx
+*.csv
