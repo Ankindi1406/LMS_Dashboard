@@ -2,12 +2,16 @@ const ExcelJS = require("exceljs");
 const fs = require("fs");
 const path = require("path");
 
+// ✅ SharePoint synced folder
+const OUTPUT_DIR = "C:\\Users\\Ankush.Kumar\\OneDrive - InterGlobe Aviation Limited\\test - Testing\\lms_uploads"
+
 async function mergeToMultipleSheets() {
     try {
-        const folderPath = __dirname;
+
+        const folderPath = process.cwd();  // ✅ FIXED
         const today = new Date().toISOString().split("T")[0];
 
-        // ✅ Get files
+        // ✅ Get batch files
         const files = fs.readdirSync(folderPath)
             .filter(file => file.startsWith(`All_IGA_FAST_${today}`) && file.endsWith(".xlsx"))
             .sort();
@@ -19,9 +23,12 @@ async function mergeToMultipleSheets() {
 
         console.log("📂 Files:", files);
 
-        const finalFile = `All_IGA_FAST_${today}_COMBINED.xlsx`;
+        // ✅ Save final file directly to SharePoint folder
+        const finalFile = path.join(
+            OUTPUT_DIR,
+            `All_IGA_FINAL_${today}.xlsx`
+        );
 
-        // ✅ STREAM WRITER
         const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
             filename: finalFile,
             useStyles: false,
@@ -30,13 +37,11 @@ async function mergeToMultipleSheets() {
 
         let sheetCount = 1;
 
-        // ✅ Process each file → separate sheet
         for (const file of files) {
 
             console.log(`🔄 Processing: ${file}`);
 
-            const sheetName = `Sheet${sheetCount}`;
-            const worksheet = workbook.addWorksheet(sheetName);
+            const worksheet = workbook.addWorksheet(`Batch_${sheetCount}`);
 
             const filePath = path.join(folderPath, file);
             const stream = fs.createReadStream(filePath);
@@ -59,6 +64,18 @@ async function mergeToMultipleSheets() {
         await workbook.commit();
 
         console.log(`✅ FINAL FILE CREATED: ${finalFile}`);
+
+        // ✅ CLEANUP batch files
+        console.log("🧹 Cleaning batch files...");
+
+        files.forEach(file => {
+            const fullPath = path.join(folderPath, file);
+            if (fs.existsSync(fullPath)) {
+                fs.unlinkSync(fullPath);
+            }
+        });
+
+        console.log("✅ Batch files deleted");
 
     } catch (error) {
         console.error("❌ Merge failed:", error);

@@ -1,7 +1,7 @@
 const axios = require("axios");
 const ExcelJS = require("exceljs");
 
-
+const OUTPUT_DIR = "C:\\Users\\Ankush.Kumar\\OneDrive - InterGlobe Aviation Limited\\test - Testing\\lms_uploads"
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -217,7 +217,13 @@ async function generateBatch(start, end) {
     const token = await getAccessToken();
 
     const today = new Date().toISOString().split("T")[0];
-    const fileName = `All_IGA_FAST_${today}_${start}_${end}.xlsx`;
+     const fileName = `All_IGA_FAST_${today}_${start}_${end}.xlsx`;
+
+
+    // const fileName = path.join(
+    // OUTPUT_DIR,
+    // `All_IGA_FAST_${today}_${start}_${end}.xlsx`
+    // );
 
     const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
         filename: fileName,
@@ -289,7 +295,46 @@ async function generateBatch(start, end) {
     console.log(`⏰ End Time: ${endTime.toLocaleString()}`);
     console.log(`⏱ Duration: ${(endTime - startTime) / 1000}s`);
     console.log(`📁 File Created: ${fileName}\n`);
+
+    return fileName;
 }
+
+
+
+
+
+// async function runAllBatches() {
+
+//     const BATCH_SIZE = 100;
+//     const MAX_IGA = 1000;
+//     const DELAY = 0.5 * 60 * 1000; // 5 minutes
+
+//     console.log("🚀 FULL JOB STARTED\n");
+
+//     for (let start = 1; start <= MAX_IGA; start += BATCH_SIZE) {
+
+//         const end = Math.min(start + BATCH_SIZE - 1, MAX_IGA);
+
+//         const fileName = await generateBatch(start, end);
+//         filescreated.push(fileName);
+
+//         // ✅ Logging after each batch
+//         console.log(`✅ Finished batch ${start}-${end}`);
+
+//         if (end < MAX_IGA) {
+//             console.log(`⏳ Waiting 5 minutes before next batch...\n`);
+//             await sleep(DELAY);
+//         }
+//     }
+
+//     console.log("🎯 ALL BATCHES COMPLETED");
+
+//     // ✅ FINAL MERGE
+//     console.log("🔄 Starting merge...");
+//    // await mergeFiles();
+
+//     console.log("✅ FINAL MERGE COMPLETED");
+// }
 
 
 
@@ -299,7 +344,7 @@ async function runAllBatches() {
 
     const BATCH_SIZE = 100;
     const MAX_IGA = 1000;
-    const DELAY = 2 * 60 * 1000; // 5 minutes
+    const DELAY = 0.5 * 60 * 1000;
 
     console.log("🚀 FULL JOB STARTED\n");
 
@@ -309,23 +354,19 @@ async function runAllBatches() {
 
         await generateBatch(start, end);
 
-        // ✅ Logging after each batch
         console.log(`✅ Finished batch ${start}-${end}`);
 
         if (end < MAX_IGA) {
-            console.log(`⏳ Waiting 5 minutes before next batch...\n`);
+            console.log(`⏳ Waiting before next batch...\n`);
             await sleep(DELAY);
         }
     }
 
     console.log("🎯 ALL BATCHES COMPLETED");
-
-    // ✅ FINAL MERGE
-    console.log("🔄 Starting merge...");
-   // await mergeFiles();
-
-    console.log("✅ FINAL MERGE COMPLETED");
 }
+
+
+
 
 
 
