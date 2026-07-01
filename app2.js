@@ -1,6 +1,13 @@
 const axios = require("axios");
 const ExcelJS = require("exceljs");
 
+
+
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+
 // ✅ CONFIG (move secrets to env later)
 const TOKEN_URL = "https://successfactor-uat-3scale-apicast-production.apps.ocpnonprodcl01.goindigo.in/SuccessFactor-oAuth/oauth/token";
 const API_URL = "https://cpi-test-preprod-3scale-apicast-production.apps.ocpnonprodcl01.goindigo.in/http/LMS_LearningHistory_PROD";
@@ -123,19 +130,95 @@ async function getStatusSummary(igaCode, token) {
 }
 
 // ✅ MAIN FUNCTION
-async function generateExcel() {
-    console.log("🚀 Job started");
+// async function generateExcel() {
+//     console.log("🚀 Job started");
+
+//     const token = await getAccessToken();
+
+//     const start = 1;
+//     const end = 100;  // change dynamically later
+//     let current = start;
+
+//     const today = new Date().toISOString().split("T")[0];
+//     const fileName = `All_IGA_FAST_${today}_${start}_${end}.xlsx`;
+
+//     // ✅ STREAM WRITER (optimized)
+//     const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
+//         filename: fileName,
+//         useStyles: false,
+//         useSharedStrings: false
+//     });
+
+//     const worksheet = workbook.addWorksheet("All Data");
+
+//     worksheet.columns = [
+//         { header: "IGACode", key: "IGACode" },
+//         { header: "Name", key: "Name" },
+//         { header: "Title", key: "title" },
+//         { header: "Designation", key: "Designation" },
+//         { header: "Department", key: "Department" },
+//         { header: "Base", key: "Base" },
+//         { header: "Component ID", key: "componentId" },
+//         { header: "Grade", key: "grade" },
+//         { header: "Comments", key: "comments" },
+//         { header: "CompletionDate", key: "completionDate" },
+//         { header: "Instructor", key: "instructorName" },
+//         { header: "Status", key: "status" },
+//         { header: "Total Hours", key: "totalHours" },
+//         { header: "Credit Hours", key: "creditHours" },
+//         { header: "CPE Hours", key: "cpeHours" },
+//         { header: "Revision Number", key: "revisionNumber" }
+//     ];
+
+//     const concurrency = 20;
+
+//     async function worker() {
+//         while (true) {
+
+//             if (current > end) return;
+
+//             const iga = current++;
+
+//             try {
+//                 console.log(`🔄 Processing IGACode: ${iga}`);
+
+//                 const records = await getStatusSummary(iga, token);
+
+//                 if (records.length === 0) continue;
+
+//                 records.forEach(r => {
+//                     worksheet.addRow(r).commit();
+//                 });
+
+//             } catch (err) {
+//                 console.log(`❌ Error IGACode ${iga}`);
+//             }
+//         }
+//     }
+
+//     const workers = Array.from({ length: concurrency }, worker);
+
+//     await Promise.all(workers);
+
+//     worksheet.commit();
+//     await workbook.commit();
+
+//     console.log(`✅ File created: ${fileName}`);
+// }
+
+
+
+async function generateBatch(start, end) {
+    const startTime = new Date();
+
+    console.log(`\n🚀 STARTING BATCH: ${start} → ${end}`);
+    console.log(`⏰ Start Time: ${startTime.toLocaleString()}`);
 
     const token = await getAccessToken();
-
-    const start = 1;
-    const end = 100;  // change dynamically later
-    let current = start;
 
     const today = new Date().toISOString().split("T")[0];
     const fileName = `All_IGA_FAST_${today}_${start}_${end}.xlsx`;
 
-    // ✅ STREAM WRITER (optimized)
     const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({
         filename: fileName,
         useStyles: false,
@@ -163,46 +246,107 @@ async function generateExcel() {
         { header: "Revision Number", key: "revisionNumber" }
     ];
 
+    let current = start;
     const concurrency = 20;
+    let processedCount = 0;
 
     async function worker() {
         while (true) {
 
-            if (current > end) return;
+            if (current > end) break;
 
             const iga = current++;
 
             try {
-                console.log(`🔄 Processing IGACode: ${iga}`);
-
                 const records = await getStatusSummary(iga, token);
-
-                if (records.length === 0) continue;
 
                 records.forEach(r => {
                     worksheet.addRow(r).commit();
                 });
 
+                processedCount++;
+
+                // ✅ OPTIONAL progress log every 1000
+                if (processedCount % 1000 === 0) {
+                    console.log(`📊 Batch ${start}-${end}: Processed ${processedCount} IGAs`);
+                }
+
             } catch (err) {
-                console.log(`❌ Error IGACode ${iga}`);
+                console.log(`❌ Failed IGACode ${iga}`);
             }
         }
     }
 
-    const workers = Array.from({ length: concurrency }, worker);
-
-    await Promise.all(workers);
+    await Promise.all(Array.from({ length: concurrency }, worker));
 
     worksheet.commit();
     await workbook.commit();
 
-    console.log(`✅ File created: ${fileName}`);
+    const endTime = new Date();
+
+    console.log(`✅ BATCH COMPLETED: ${start} → ${end}`);
+    console.log(`📊 Total IGAs Processed: ${processedCount}`);
+    console.log(`⏰ End Time: ${endTime.toLocaleString()}`);
+    console.log(`⏱ Duration: ${(endTime - startTime) / 1000}s`);
+    console.log(`📁 File Created: ${fileName}\n`);
 }
+
+
+
+
+
+async function runAllBatches() {
+
+    const BATCH_SIZE = 100;
+    const MAX_IGA = 1000;
+    const DELAY = 2 * 60 * 1000; // 5 minutes
+
+    console.log("🚀 FULL JOB STARTED\n");
+
+    for (let start = 1; start <= MAX_IGA; start += BATCH_SIZE) {
+
+        const end = Math.min(start + BATCH_SIZE - 1, MAX_IGA);
+
+        await generateBatch(start, end);
+
+        // ✅ Logging after each batch
+        console.log(`✅ Finished batch ${start}-${end}`);
+
+        if (end < MAX_IGA) {
+            console.log(`⏳ Waiting 5 minutes before next batch...\n`);
+            await sleep(DELAY);
+        }
+    }
+
+    console.log("🎯 ALL BATCHES COMPLETED");
+
+    // ✅ FINAL MERGE
+    console.log("🔄 Starting merge...");
+   // await mergeFiles();
+
+    console.log("✅ FINAL MERGE COMPLETED");
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // ✅ AUTO RUN (KEY)
 (async () => {
     try {
-        await generateExcel();
+        await runAllBatches();
         console.log("✅ Job completed");
         process.exit(0);
     } catch (err) {
