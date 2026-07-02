@@ -119,7 +119,7 @@ async function mergeToMultipleSheets() {
         // ✅ Create merged file in runner folder FIRST
         const finalFile = path.join(
             folderPath,
-            `All_IGA_FINAL_${today}.xlsx`
+            `All_IGA_FINAL_${Date.now()}.xlsx`
         );
 
         const workbook = new ExcelJS.stream.xlsx.WorkbookWriter({

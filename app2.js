@@ -342,8 +342,8 @@ async function generateBatch(start, end) {
 
 async function runAllBatches() {
 
-    const BATCH_SIZE = 2000;
-    const MAX_IGA = 6000;
+    const BATCH_SIZE = 100;
+    const MAX_IGA = 500;
     const DELAY = 0.1 * 60 * 1000;
 
     console.log("🚀 FULL JOB STARTED\n");
