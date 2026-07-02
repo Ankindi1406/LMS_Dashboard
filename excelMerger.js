@@ -168,7 +168,7 @@ async function mergeToMultipleSheets() {
         // ✅ Copy to SharePoint sync folder AFTER creation
         const sharepointFile = path.join(
             OUTPUT_DIR,
-            `All_IGA_FINAL_${today}.xlsx`
+            `All_IGA_FINAL_checking_${today}.xlsx`
         );
 
         console.log("📤 Copying to SharePoint folder...");
